@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 
-const Game = ({username}) => {
+const Game = ({username, opponent}) => {
   const [game, setGame] = useState(new Array(9).fill(null));
   const [playerOne, setPlayerOne] = useState({username:'A'});
   const [playerTwo, setPlayerTwo] = useState({username:'B'});

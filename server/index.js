@@ -37,9 +37,27 @@ io.on('connection', socket => {
     })
   }
 
-  // console.log(`Socket id ${socket.id}`)
+  console.log(`Socket id ${socket.id}`)
 
-  io.emit('users', users);
+  socket.emit('users', users);
+
+  // socket.on('send_challenge', data => {
+  //   socket.to(data).emit('receive_challenge', { username: socket.username})
+  // })
+
+  // socket.on('respond_to_challenge', data => {
+  //   if (data.answer) {
+  //     socket.to(data.challenger).emit('start_game', data);
+  //   } else {
+  //     socket.to(data.challenger).emit('refused_to_play', data);
+  //   }
+  // })
+
+  // socket.on('join_room', room => {
+  //   socket.join(room);
+
+  //   console.log(`${socket.username} has joined room: ${room}`)
+  // })
 
  
 });

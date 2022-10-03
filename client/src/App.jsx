@@ -15,6 +15,7 @@ const socket = io('http://localhost:3001', {
 
 const App = () => {
   const [username, setUsername] = useState('');
+  const [opponent, setOpponent] = useState('');
   const [users, setUsers] = useState([]);
   const [isConnected, setIsConnected] = useState(false);
 
@@ -25,6 +26,16 @@ const App = () => {
     setIsConnected(true);
   }
 
+  const handleClickUser = (opponent) => {
+    if (opponent === username) return;
+    
+    socket.emit('send_challenge', opponent);
+
+    
+    
+    // socket.emit('join_room', room);
+    // setOpponent(room);
+  }
 
 
   useEffect(() => {
@@ -33,9 +44,7 @@ const App = () => {
     })
 
     socket.on('users', users => {
-      console.log(users);
-
-      console.log(username);
+      console.log('on users event')
       const newUsers = users.sort((a, b) => {
         // console.log(`${a.username} = ${username} AND ${b.username} = ${username}`);
         if (a.username === username) return -1;
@@ -47,16 +56,35 @@ const App = () => {
       setUsers(newUsers);
     })
 
+    socket.on('receive_challenge', challenger => {
+      socket.emit('respond_to_challenge', {
+        username,
+        challenger,
+        answer: true // change later to confirm() or something similar
+      });
+    })
+
+    socket.on('start_game', data => {
+      console.log('Playing against')
+      console.log(data)
+    })
+
+    socket.on('refused_to_play', data => {
+      console.log('Player refused to play')
+      console.log(data)
+    })
+
     return () => {
       socket.off('connect');
       socket.off('users');
+      socket.off('receive_challenge');
+      socket.off('start_game');
+      socket.off('refused_to_play');
     }
-  }, [])
+  }, [username])
 
   return (
     <div className="container">
-      {console.log(username, users)}
-
       <aside className="sidebar">
         {!isConnected && (
           <>
@@ -68,8 +96,9 @@ const App = () => {
         <h4>Global Chat</h4>
 
         <p>chat...</p>
+        {console.log(users)}
         {users.map(user => (
-          <p key={user.id}>{user.username}</p>
+          <p key={user.id} onClick={() => handleClickUser(user.username)}>{user.username}</p>
         ))}
       </aside>
 
@@ -77,7 +106,7 @@ const App = () => {
         {/* {!username ? ( */}
           {/* <Login username={username} setUsername={setUsername} /> */}
           {/* ) : ( */}
-          <Game username={username} />
+          <Game username={username} opponent={opponent} />
         {/* )} */}
       </main>
 

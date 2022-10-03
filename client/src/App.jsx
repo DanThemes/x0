@@ -21,28 +21,29 @@ const App = () => {
 
   
   const handleUsernameSelect = () => {
+    if (username.length < 1) return;
+
     socket.auth = { username };
     socket.connect();
     setIsConnected(true);
   }
 
-  const handleClickUser = (opponent) => {
-    if (opponent === username) return;
+  const handleSendChallenge = (userIdClicked) => {
+    setOpponent(userIdClicked);
+
+    // Exit if use clicks on himself
+    if (userIdClicked === socket.id) return;
     
-    socket.emit('send_challenge', opponent);
+    // Emit a challenge
+    socket.emit('send_challenge', {
+      playerOne: socket.id,
+      playerTwo: userIdClicked
+    });
 
     
-    
-    // socket.emit('join_room', room);
-    // setOpponent(room);
   }
 
-
   useEffect(() => {
-    socket.on('connect', () => {
-      console.log('connected');
-    })
-
     socket.on('users', users => {
       console.log('on users event')
       const newUsers = users.sort((a, b) => {
@@ -56,17 +57,36 @@ const App = () => {
       setUsers(newUsers);
     })
 
-    socket.on('receive_challenge', challenger => {
-      socket.emit('respond_to_challenge', {
-        username,
-        challenger,
-        answer: true // change later to confirm() or something similar
-      });
+    return () => {
+      socket.off('users');
+    }
+  }, [username])
+
+
+  useEffect(() => {
+    // socket.on('connect', () => {
+    //   console.log('connected');
+    // })
+
+    socket.on('receive_challenge', data => {
+      // socket.emit('respond_to_challenge', {
+      //   username,
+      //   challenger,
+      //   answer: true // change later to confirm() or something similar
+      // });
+
+      // TODO: create a helper function that shows a
+      // popup with the challenge, and 2 buttons
+      // to accept or deny, each having an onClick function attached
+      console.log(data);
     })
 
     socket.on('start_game', data => {
       console.log('Playing against')
       console.log(data)
+
+      // join opponent room only after he accepts to play
+      socket.emit('join_room', data.opponent);
     })
 
     socket.on('refused_to_play', data => {
@@ -76,12 +96,11 @@ const App = () => {
 
     return () => {
       socket.off('connect');
-      socket.off('users');
       socket.off('receive_challenge');
       socket.off('start_game');
       socket.off('refused_to_play');
     }
-  }, [username])
+  }, [])
 
   return (
     <div className="container">
@@ -98,7 +117,7 @@ const App = () => {
         <p>chat...</p>
         {console.log(users)}
         {users.map(user => (
-          <p key={user.id} onClick={() => handleClickUser(user.username)}>{user.username}</p>
+          <p key={user.id} onClick={() => handleSendChallenge(user.id)}>{user.username}</p>
         ))}
       </aside>
 

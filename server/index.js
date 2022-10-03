@@ -41,23 +41,25 @@ io.on('connection', socket => {
 
   socket.emit('users', users);
 
-  // socket.on('send_challenge', data => {
-  //   socket.to(data).emit('receive_challenge', { username: socket.username})
-  // })
+  socket.on('send_challenge', data => {
+    console.log(`${data.playerOne} send a challenge to ${data.playerTwo}`);
 
-  // socket.on('respond_to_challenge', data => {
-  //   if (data.answer) {
-  //     socket.to(data.challenger).emit('start_game', data);
-  //   } else {
-  //     socket.to(data.challenger).emit('refused_to_play', data);
-  //   }
-  // })
+    socket.to(data.playerTwo).emit('receive_challenge', data)
+  })
 
-  // socket.on('join_room', room => {
-  //   socket.join(room);
+  socket.on('respond_to_challenge', data => {
+    if (data.answer) {
+      socket.to(data.challenger).emit('start_game', data);
+    } else {
+      socket.to(data.challenger).emit('refused_to_play', data);
+    }
+  })
 
-  //   console.log(`${socket.username} has joined room: ${room}`)
-  // })
+  socket.on('join_room', room => {
+    socket.join(room);
+
+    console.log(`${socket.username} has joined room: ${room}`)
+  })
 
  
 });

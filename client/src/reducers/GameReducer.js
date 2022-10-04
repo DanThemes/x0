@@ -1,5 +1,18 @@
+export const GAME_STATUS = Object.freeze({
+  NOT_STARTED: 'NOT_STARTED',
+  STARTED: 'STARTED',
+  ENDED: 'ENDED'
+});
+
 export const INITIAL_STATE = {
-  test: 1
+  user: {},
+  users: [],
+  game: {
+    status: GAME_STATUS.NOT_STARTED,
+    nextTurn: '',
+    winner: null,
+    result: null
+  }
 }
 
 export const GameReducer = (state, action) => {

@@ -49,9 +49,10 @@ const App = () => {
   }
 
   const handleResponseToChallenge = response => {
+    setShowNotification(false);
+
     if (response) {
       socket.emit('join_room', opponent.id);
-      setShowNotification(false);
     }
 
     socket.emit('respond_to_challenge', {
@@ -110,6 +111,7 @@ const App = () => {
 
 
     socket.on('start_game', data => {
+      setShowNotification(false);
       setShowGame(true);
       setGameData(data);
       console.log('Playing against')
@@ -117,6 +119,8 @@ const App = () => {
     })
 
     socket.on('refused_to_play', data => {
+      setShowNotification(false);
+      setOpponent({});
       console.log('Player refused to play')
       console.log(data)
     })

@@ -72,7 +72,7 @@ io.on('connection', socket => {
   });
 
   socket.on('game_over', data => {
-    io.to(data.playerOne.id).emit('game_over', data);
+    io.to(data.room).emit('game_over', data.winner);
   })
 
 

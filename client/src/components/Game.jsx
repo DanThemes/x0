@@ -24,9 +24,12 @@ const checkGame = (game) => {
 const Game = ({ user, gameData: {playerOne, playerTwo}, socket }) => {
   const [game, setGame] = useState(new Array(9).fill(null));
   const [nextTurn, setNextTurn] = useState(null);
-  const [result, setResult] = useState(null);
+  const [winner, setWinner] = useState(null);
 
   const handleClick = cellNumber => {
+    // Exit if game ended
+    if (winner) return;
+
     // Exit if not current user's turn
     if(nextTurn !== user.username) return;
 
@@ -63,11 +66,14 @@ const Game = ({ user, gameData: {playerOne, playerTwo}, socket }) => {
 
     // End the game when all cells have been filled in
     if (!game.includes(null)) {
-      socket.emit('game_over', {
-        playerOne,
-        playerTwo,
-        game
-      });
+
+      // Draw
+      if (checkGame(game) === null) {
+        socket.emit('game_over', {
+          room: playerOne.id,
+          winner: null
+        });
+      }
     }
   }, [game])
 
@@ -75,8 +81,7 @@ const Game = ({ user, gameData: {playerOne, playerTwo}, socket }) => {
     setNextTurn(() => playerOne.username);
 
     socket.on('update_game', data => {
-      setGame(data.game);
-      
+
       // Check if there's a winner
       if (checkGame(data.game) === 'X') {
         socket.emit('game_over', {
@@ -90,28 +95,27 @@ const Game = ({ user, gameData: {playerOne, playerTwo}, socket }) => {
         });
       }
 
-
+      setGame(data.game);
       setNextTurn(data.nextTurn);
+
       console.log(data);
     })
 
-    socket.on('game_over', data => {
-      // setResult()
-
-      if(1) {
-        console.log(`Game over! Player ${playerOne.username} won!`);
-      }
-      
-      
-      else {
+    socket.on('game_over', winner => {
+      if(winner !== null) {
+        console.log(`Game over! Player ${winner} won!`);
+      } else {
         console.log('Game over! It\'s a draw!');
       }
+
+      setWinner(winner);
     })
   }, [])
 
   return (
     <div className="game">
       <h4>Game</h4>
+      {winner && <p>The winner is <strong>{winner}</strong></p>}
       {/* {console.log(game)} */}
       <div className="grid">
           {game.map((cell, idx) => {

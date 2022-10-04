@@ -152,7 +152,8 @@ const App = () => {
       </aside>
 
       <main className="content">
-        {state}
+        {/* {console.log(state)} */}
+        
         {/* {!username ? ( */}
           {/* <Login username={username} setUsername={setUsername} /> */}
           {/* ) : ( */}

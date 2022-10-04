@@ -76,7 +76,12 @@ io.on('connection', socket => {
   })
 
   socket.on('leave_game', data => {
-    io.broadcast.to(data.room).emit('left_game', data.userWhoLeft.username);
+    // io.broadcast.to(data.room).emit('left_game', data.userWhoLeft.username);
+    socket.to(data.room).emit('left_game', data.userWhoLeft.username);
+  })
+
+  socket.on('disconnect', () => {
+    console.log(`${socket.id} disconnected`)
   })
 
 

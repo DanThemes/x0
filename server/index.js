@@ -28,10 +28,10 @@ io.use((socket, next) => {
 })
 
 io.on('connection', socket => {
-  const users = [];
+  const usersList = [];
 
   for (let [id, socket] of io.of('/').sockets) {
-    users.push({
+    usersList.push({
       id: id,
       username: socket.username
     })
@@ -39,20 +39,12 @@ io.on('connection', socket => {
 
   console.log(`Socket id ${socket.id}`)
 
-  socket.emit('users', users);
+  io.emit('users', usersList);
 
   socket.on('send_challenge', data => {
-    console.log(`${data.playerOne} send a challenge to ${data.playerTwo}`);
+    console.log(`${data.playerOne.username} send a challenge to ${data.playerTwo.username}`);
 
-    socket.to(data.playerTwo).emit('receive_challenge', data)
-  })
-
-  socket.on('respond_to_challenge', data => {
-    if (data.answer) {
-      socket.to(data.challenger).emit('start_game', data);
-    } else {
-      socket.to(data.challenger).emit('refused_to_play', data);
-    }
+    socket.to(data.playerTwo.id).emit('receive_challenge', data)
   })
 
   socket.on('join_room', room => {
@@ -60,6 +52,30 @@ io.on('connection', socket => {
 
     console.log(`${socket.username} has joined room: ${room}`)
   })
+
+  socket.on('respond_to_challenge', data => {
+    console.log(data);
+    
+    // if playerTwo accepted, start the game
+    if (data.answer) {
+      io.to(data.playerOne.id).emit('start_game', data);
+    } 
+    
+    // if playerTwo refused, emit a refused_to_play event
+    else {
+      io.to(data.playerOne.id).emit('refused_to_play', data);
+    }
+  })
+
+  socket.on('update_game', data => {
+    io.to(data.playerOne.id).emit('update_game', data);
+  });
+
+  socket.on('game_over', data => {
+    io.to(data.playerOne.id).emit('game_over', data);
+  })
+
+
 
  
 });

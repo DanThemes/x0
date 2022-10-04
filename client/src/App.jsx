@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Game from './components/Game';
 import Login from './components/Login';
+import Notification from './components/Notification';
 import io from 'socket.io-client';
 
 import './app.css';
-import { useEffect } from 'react';
 
 const socket = io('http://localhost:3001', {
   autoConnect: false,
@@ -14,53 +14,75 @@ const socket = io('http://localhost:3001', {
 });
 
 const App = () => {
-  const [username, setUsername] = useState('');
-  const [opponent, setOpponent] = useState('');
+  const [user, setUser] = useState({});
+  const [opponent, setOpponent] = useState({});
   const [users, setUsers] = useState([]);
   const [isConnected, setIsConnected] = useState(false);
+  const [showNotification, setShowNotification] = useState(false);
+  const [showGame, setShowGame] = useState(false);
+  const [gameData, setGameData] = useState({});
 
   
-  const handleUsernameSelect = () => {
-    if (username.length < 1) return;
+  const handleUserSelect = () => {
+    if (user.username.length < 1) return;
 
-    socket.auth = { username };
+    // TODO: don't allow 2 users with the same username
+
+    socket.auth = { username: user.username };
     socket.connect();
+    
     setIsConnected(true);
   }
 
-  const handleSendChallenge = (userIdClicked) => {
-    setOpponent(userIdClicked);
+  // Send a challenge
+  const handleSendChallenge = (userClicked) => {
+    setOpponent(userClicked);
 
-    // Exit if use clicks on himself
-    if (userIdClicked === socket.id) return;
+    // Exit if user clicks on himself
+    if (userClicked.id === socket.id) return;
     
     // Emit a challenge
     socket.emit('send_challenge', {
-      playerOne: socket.id,
-      playerTwo: userIdClicked
+      playerOne: { id: socket.id, username: user.username },
+      playerTwo: { id: userClicked.id, username: userClicked.username }
     });
+  }
 
-    
+  const handleResponseToChallenge = response => {
+    if (response) {
+      socket.emit('join_room', opponent.id);
+      setShowNotification(false);
+    }
+
+    socket.emit('respond_to_challenge', {
+      playerOne: opponent,
+      playerTwo: user,
+      answer: response
+    });
   }
 
   useEffect(() => {
-    socket.on('users', users => {
+    socket.on('users', usersList => {
       console.log('on users event')
-      const newUsers = users.sort((a, b) => {
+      console.log(usersList)
+
+      const newUsers = usersList.sort((a, b) => {
         // console.log(`${a.username} = ${username} AND ${b.username} = ${username}`);
-        if (a.username === username) return -1;
-        if (b.username === username) return 1;
+        if (a.username === user.username) return -1;
+        if (b.username === user.username) return 1;
         if (a.username < b.username) return -1;
         return a.username > b.username ? 1 : 0;
       })
 
+      
+      setUser((prev) => ({ ...prev, id: socket.id }));
       setUsers(newUsers);
     })
 
     return () => {
       socket.off('users');
     }
-  }, [username])
+  }, [user])
 
 
   useEffect(() => {
@@ -78,15 +100,20 @@ const App = () => {
       // TODO: create a helper function that shows a
       // popup with the challenge, and 2 buttons
       // to accept or deny, each having an onClick function attached
+
+      setOpponent(data.playerOne);
+      setShowNotification(true);
       console.log(data);
     })
 
+
+
+
     socket.on('start_game', data => {
+      setShowGame(true);
+      setGameData(data);
       console.log('Playing against')
       console.log(data)
-
-      // join opponent room only after he accepts to play
-      socket.emit('join_room', data.opponent);
     })
 
     socket.on('refused_to_play', data => {
@@ -95,7 +122,7 @@ const App = () => {
     })
 
     return () => {
-      socket.off('connect');
+      // socket.off('connect');
       socket.off('receive_challenge');
       socket.off('start_game');
       socket.off('refused_to_play');
@@ -108,16 +135,19 @@ const App = () => {
         {!isConnected && (
           <>
             <h4>Select a username to chat and play</h4>
-            <Login username={username} setUsername={setUsername} handleUsernameSelect={handleUsernameSelect} />
+            <Login user={user} setUser={setUser} handleUserSelect={handleUserSelect} />
           </>
         )}
 
         <h4>Global Chat</h4>
 
         <p>chat...</p>
-        {console.log(users)}
+        {console.log(user)}
         {users.map(user => (
-          <p key={user.id} onClick={() => handleSendChallenge(user.id)}>{user.username}</p>
+          <div key={user.id}>
+            <p onClick={() => handleSendChallenge(user)}>{user.username}<br />{user.id}</p>
+            <hr />
+          </div>
         ))}
       </aside>
 
@@ -125,7 +155,8 @@ const App = () => {
         {/* {!username ? ( */}
           {/* <Login username={username} setUsername={setUsername} /> */}
           {/* ) : ( */}
-          <Game username={username} opponent={opponent} />
+          {showNotification && <Notification handleResponseToChallenge={handleResponseToChallenge} opponent={opponent} /> }
+          {showGame && <Game user={user} gameData={gameData} socket={socket} /> }
         {/* )} */}
       </main>
 

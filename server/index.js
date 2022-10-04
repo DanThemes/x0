@@ -75,6 +75,10 @@ io.on('connection', socket => {
     io.to(data.room).emit('game_over', data.winner);
   })
 
+  socket.on('leave_game', data => {
+    io.broadcast.to(data.room).emit('left_game', data.userWhoLeft.username);
+  })
+
 
 
  

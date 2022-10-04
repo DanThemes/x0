@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import Game from './components/Game';
 import Login from './components/Login';
 import Notification from './components/Notification';
+import { GameContext } from './context/StateContext';
 import io from 'socket.io-client';
 
 import './app.css';
@@ -20,7 +21,11 @@ const App = () => {
   const [isConnected, setIsConnected] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
   const [showGame, setShowGame] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
   const [gameData, setGameData] = useState({});
+
+  const {state, dispatch} = useContext(GameContext);
+
 
   
   const handleUserSelect = () => {
@@ -36,6 +41,9 @@ const App = () => {
 
   // Send a challenge
   const handleSendChallenge = (userClicked) => {
+    // Can't challenge anyone during a game
+    if (isPlaying) return;
+
     setOpponent(userClicked);
 
     // Exit if user clicks on himself
@@ -87,32 +95,16 @@ const App = () => {
 
 
   useEffect(() => {
-    // socket.on('connect', () => {
-    //   console.log('connected');
-    // })
-
     socket.on('receive_challenge', data => {
-      // socket.emit('respond_to_challenge', {
-      //   username,
-      //   challenger,
-      //   answer: true // change later to confirm() or something similar
-      // });
-
-      // TODO: create a helper function that shows a
-      // popup with the challenge, and 2 buttons
-      // to accept or deny, each having an onClick function attached
-
       setOpponent(data.playerOne);
       setShowNotification(true);
       console.log(data);
     })
 
-
-
-
     socket.on('start_game', data => {
       setShowNotification(false);
       setShowGame(true);
+      setIsPlaying(true);
       setGameData(data);
       console.log('Playing against')
       console.log(data)
@@ -125,11 +117,15 @@ const App = () => {
       console.log(data)
     })
 
+    socket.on('game_over', data => {
+      setIsPlaying(false);
+    })
+
     return () => {
-      // socket.off('connect');
       socket.off('receive_challenge');
       socket.off('start_game');
       socket.off('refused_to_play');
+      socket.off('game_over');
     }
   }, [])
 
@@ -156,6 +152,7 @@ const App = () => {
       </aside>
 
       <main className="content">
+        {state}
         {/* {!username ? ( */}
           {/* <Login username={username} setUsername={setUsername} /> */}
           {/* ) : ( */}

@@ -25,10 +25,11 @@ const Game = ({ user, gameData: {playerOne, playerTwo}, socket }) => {
   const [game, setGame] = useState(new Array(9).fill(null));
   const [nextTurn, setNextTurn] = useState(null);
   const [winner, setWinner] = useState(null);
+  const [leftGame, setLeftGame] = useState(null);
 
   const handleClick = cellNumber => {
     // Exit if game ended
-    if (winner) return;
+    if (winner || leftGame) return;
 
     // Exit if not current user's turn
     if(nextTurn !== user.username) return;
@@ -59,6 +60,13 @@ const Game = ({ user, gameData: {playerOne, playerTwo}, socket }) => {
     console.log(gameUpdate)
 
     socket.emit('update_game', gameUpdate);
+  }
+
+  const handleLeaveGame = () => {
+    socket.emit('leave_game', {
+      room: playerOne.id,
+      userWhoLeft: user
+    });
   }
 
   useEffect(() => {
@@ -110,12 +118,18 @@ const Game = ({ user, gameData: {playerOne, playerTwo}, socket }) => {
 
       setWinner(winner);
     })
+
+    socket.on('left_game', userWhoLeft => {
+      setLeftGame(userWhoLeft);
+    })
   }, [])
 
   return (
     <div className="game">
       <h4>Game</h4>
-      {winner && <p>The winner is <strong>{winner}</strong></p>}
+      {winner && <p>The winner is <strong>{winner}</strong>.</p>}
+      {leftGame && <p>User <strong>{leftGame}</strong> has left the game.</p>}
+      <button onClick={handleLeaveGame}>Leave game</button>
       {/* {console.log(game)} */}
       <div className="grid">
           {game.map((cell, idx) => {

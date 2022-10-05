@@ -142,7 +142,14 @@ export const GameReducer = (state, action) => {
           status: payload
         }
       }
-    
+  
+    case ACTIONS.RESET_GAME:
+      return {
+        ...state,
+        game: {
+          ...INITIAL_STATE.game
+        }
+      }
 
       
 

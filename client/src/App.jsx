@@ -11,14 +11,14 @@ import './app.css';
 
 
 const App = () => {
-  const [user, setUser] = useState({});
-  const [opponent, setOpponent] = useState({});
-  const [users, setUsers] = useState([]);
+  // const [user, setUser] = useState({});
+  // const [opponent, setOpponent] = useState({});
+  // const [users, setUsers] = useState([]);
   // const [isConnected, setIsConnected] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
   const [showGame, setShowGame] = useState(false);
   // const [isPlaying, setIsPlaying] = useState(false);
-  const [gameData, setGameData] = useState({});
+  // const [gameData, setGameData] = useState({});
 
   const { state, dispatch } = useContext(GameContext);
 
@@ -41,11 +41,14 @@ const App = () => {
     // Can't challenge anyone during a game
     if (state.game.status === GAME_STATUS.ON) return;
 
-    // setOpponent(userClicked);
-    dispatch({ type: ACTIONS.SET_OPPONENT, payload: userClicked })
-
     // Exit if user clicks on himself
     if (userClicked.id === socket.id) return;
+
+    // Reset the game (i.e. set state.game back to initial values)
+    dispatch({ type: ACTIONS.RESET_GAME })
+    
+    // Set the user clicked on as the opponent
+    dispatch({ type: ACTIONS.SET_OPPONENT, payload: userClicked })
     
     // Emit a challenge
 
@@ -152,7 +155,6 @@ const App = () => {
         <h4>Global Chat</h4>
 
         <p>chat...</p>
-        {console.log(state.user)}
         {state.users.map(user => (
           <div key={user.id}>
             <p onClick={() => handleSendChallenge(user)}>{user.username}<br />{user.id}</p>
@@ -164,12 +166,8 @@ const App = () => {
       <main className="content">
         {console.log(state)}
         
-        {/* {!username ? ( */}
-          {/* <Login username={username} setUsername={setUsername} /> */}
-          {/* ) : ( */}
-          {showNotification && <Notification handleResponseToChallenge={handleResponseToChallenge} /> }
-          {showGame && <Game /> }
-        {/* )} */}
+        {showNotification && <Notification handleResponseToChallenge={handleResponseToChallenge} /> }
+        {showGame && <Game /> }
       </main>
 
     </div>

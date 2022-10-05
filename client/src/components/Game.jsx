@@ -29,9 +29,9 @@ const checkGame = (game) => {
 
 const Game = () => {
   // const [game, setGame] = useState(new Array(9).fill(null));
-  const [nextTurn, setNextTurn] = useState(null);
-  const [winner, setWinner] = useState(null);
-  const [leftGame, setLeftGame] = useState(null);
+  // const [nextTurn, setNextTurn] = useState(null);
+  // const [winner, setWinner] = useState(null);
+  // const [leftGame, setLeftGame] = useState(null);
 
   const { state, dispatch } = useContext(GameContext);
 
@@ -76,6 +76,7 @@ const Game = () => {
       room: state.game.playerOne.id,
       userWhoLeft: state.user
     });
+    dispatch({ type: ACTIONS.RESET_GAME })
   }
 
   const handleRestartGame = () => {
@@ -135,14 +136,12 @@ const Game = () => {
       }
 
       dispatch({ type: ACTIONS.SET_WINNER, payload: winner })
-      // setWinner(winner);
     })
 
     
     socket.on('user_left_game', userWhoLeft => {
       console.log('user_left_game listener')
       dispatch({ type: ACTIONS.USER_LEFT_GAME, payload: userWhoLeft.username });
-      // setLeftGame(userWhoLeft);
     })
 
     socket.on('restart_game', data => {
@@ -158,11 +157,15 @@ const Game = () => {
       <h4>Game</h4>
 
       {state.game.winner && (
-        <>
           <p>The winner is <strong>{state.game.winner}</strong>.</p>
-          <button onClick={handleRestartGame}>Restart game</button>
-        </>
       )}
+
+      {
+        (state.game.result !== null && state.game.result !== RESULT_STATUS.WITHDREW) &&
+        (
+          <button onClick={handleRestartGame}>Restart game</button>
+        )
+      }
 
       {
         state.game.result === RESULT_STATUS.WITHDREW && 
@@ -172,18 +175,20 @@ const Game = () => {
 
       {/* {console.log(game)} */}
 
-      {state.game.status === GAME_STATUS.ON ? (
-        <>
-          <button onClick={handleLeaveGame}>Leave game</button>
-          <div className={`grid ${state.game.status.toLowerCase()}`}>
-            {state.game.grid.map((cell, idx) => {
-              return <div key={idx} className={`cell cell-${idx + 1}`} onClick={() => handleClick(idx)}><span>{cell}</span></div>
-            })}
-          </div>
-        </>
-      ) : (
-        <p>Click on a user to send a new game challenge.</p>
-      )
+      {
+        (state.game.status === GAME_STATUS.ON || state.game.result === RESULT_STATUS.WIN) ? 
+        (
+          <>
+            <button onClick={handleLeaveGame}>Leave game</button>
+            <div className={`grid ${state.game.status.toLowerCase()}`}>
+              {state.game.grid.map((cell, idx) => {
+                return <div key={idx} className={`cell cell-${idx + 1}`} onClick={() => handleClick(idx)}><span>{cell}</span></div>
+              })}
+            </div>
+          </>
+        ) : (
+          <p>Click on a user to send a new game challenge.</p>
+        )
       }
 
     </div>

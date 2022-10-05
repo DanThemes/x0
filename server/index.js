@@ -42,9 +42,9 @@ io.on('connection', socket => {
   io.emit('users', usersList);
 
   socket.on('send_challenge', data => {
-    console.log(`${data.playerOne.username} send a challenge to ${data.playerTwo.username}`);
+    console.log(`${data.playerOne.id} send a challenge to ${data.playerTwo.id}`);
 
-    socket.to(data.playerTwo.id).emit('receive_challenge', data)
+    io.to(data.playerTwo.id).emit('receive_challenge', data)
   })
 
   socket.on('join_room', room => {
@@ -54,7 +54,7 @@ io.on('connection', socket => {
   })
 
   socket.on('respond_to_challenge', data => {
-    console.log(data);
+    // console.log(data);
     
     // if playerTwo accepted, start the game
     if (data.answer) {
@@ -68,8 +68,16 @@ io.on('connection', socket => {
   })
   
   socket.on('leave_game', data => {
-    socket.leave(data.room);
-    socket.to(data.room).emit('user_left_game', data.userWhoLeft);
+    // if (data.room !== socket.id) {
+    //   socket.leave(data.room);
+    // }
+    const userWhoLeftSocket = io.sockets.sockets.get(data.userWhoLeft.id);
+    userWhoLeftSocket.leave(data.room);
+
+    io.to(data.room).emit('user_left_game', data.userWhoLeft);
+    console.log(`data.room: ${data.room} - socket id: ${socket.id}`)
+    // console.log(socket.rooms)
+    console.log(io.sockets.adapter.rooms.get(data.room))
   })
 
   socket.on('restart_game', data => {

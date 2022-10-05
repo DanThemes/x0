@@ -66,9 +66,14 @@ io.on('connection', socket => {
       io.to(data.playerOne.id).emit('refused_to_play', data);
     }
   })
+  
+  socket.on('leave_game', data => {
+    socket.leave(data.room);
+    socket.to(data.room).emit('user_left_game', data.userWhoLeft);
+  })
 
   socket.on('restart_game', data => {
-    io.in(data.playerOne.id).emit('restart_game', data);
+    io.to(data.playerOne.id).emit('restart_game', data);
   })
 
   socket.on('update_game', data => {
@@ -79,9 +84,6 @@ io.on('connection', socket => {
     io.to(data.room).emit('game_over', data.winner);
   })
 
-  socket.on('leave_game', data => {
-    socket.to(data.room).emit('left_game', data.userWhoLeft.username);
-  })
 
   socket.on('disconnect', () => {
     // TODO: stop the game on disconnect and send a notification

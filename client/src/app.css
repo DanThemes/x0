@@ -29,6 +29,10 @@ html, body {
   grid-template-columns: repeat(3, 1fr);
   border: 1px solid #000;
 }
+.grid.ended {
+  opacity: 0.25;
+}
+
 .grid .cell {
   border: 1px solid #000;
   cursor: pointer;

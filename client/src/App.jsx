@@ -39,7 +39,7 @@ const App = () => {
   // Send a challenge
   const handleSendChallenge = (userClicked) => {
     // Can't challenge anyone during a game
-    if (state.game.status === GAME_STATUS.STARTED) return;
+    if (state.game.status === GAME_STATUS.ON) return;
 
     // setOpponent(userClicked);
     dispatch({ type: ACTIONS.SET_OPPONENT, payload: userClicked })
@@ -107,7 +107,7 @@ const App = () => {
     socket.on('start_game', data => {
       setShowNotification(false);
       setShowGame(true);
-      dispatch({ type: ACTIONS.SET_GAME_STATUS, payload: GAME_STATUS.STARTED })
+      dispatch({ type: ACTIONS.SET_GAME_STATUS, payload: GAME_STATUS.ON })
       dispatch({ type: ACTIONS.SET_PLAYERS, payload: { playerOne: data.playerOne, playerTwo: data.playerTwo } })
     
 
@@ -126,7 +126,7 @@ const App = () => {
     })
 
     socket.on('game_over', data => {
-      dispatch({ type: ACTIONS.SET_GAME_STATUS, payload: GAME_STATUS.ENDED })
+      dispatch({ type: ACTIONS.SET_GAME_STATUS, payload: GAME_STATUS.OFF })
       // setIsPlaying(false);
     })
 

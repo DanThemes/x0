@@ -1,14 +1,14 @@
 import { ACTIONS } from "../actions/ActionTypes";
 
-const RESULT_STATUS = Object.freeze({
+export const RESULT_STATUS = Object.freeze({
   WIN: 'WIN',
-  DRAW: 'DRAW'
+  DRAW: 'DRAW',
+  WITHDREW: 'WITHDREW'
 });
 
 export const GAME_STATUS = Object.freeze({
-  NOT_STARTED: 'NOT_STARTED',
-  STARTED: 'STARTED',
-  ENDED: 'ENDED'
+  ON: 'ON',
+  OFF: 'OFF'
 });
 
 
@@ -19,7 +19,7 @@ export const INITIAL_STATE = {
     playerOne: null,
     playerTwo: null,
     grid: new Array(9).fill(null),
-    status: GAME_STATUS.NOT_STARTED,
+    status: GAME_STATUS.OFF,
     opponent: null,
     nextTurn: null,
     winner: null,
@@ -104,7 +104,7 @@ export const GameReducer = (state, action) => {
         game: {
           ...state.game,
           // grid: new Array(9).fill(null),
-          status: GAME_STATUS.ENDED,
+          status: GAME_STATUS.OFF,
           nextTurn: null,
           winner: payload,
           result: RESULT_STATUS.WIN
@@ -117,13 +117,32 @@ export const GameReducer = (state, action) => {
         game: {
           ...state.game,
           grid: new Array(9).fill(null),
-          status: GAME_STATUS.STARTED,
+          status: GAME_STATUS.ON,
           nextTurn: null,
           winner: null,
           result: null
         }
       }
-      
+
+    case ACTIONS.USER_LEFT_GAME:
+      return {
+        ...state,
+        game: {
+          ...state.game,
+          status: GAME_STATUS.OFF,
+          result: RESULT_STATUS.WITHDREW
+        }
+      }
+
+    case ACTIONS.SET_GAME_STATUS:
+      return {
+        ...state,
+        game: {
+          ...state.game,
+          status: payload
+        }
+      }
+    
 
       
 

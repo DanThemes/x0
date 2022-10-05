@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useContext } from 'react';
 import { ACTIONS } from '../actions/ActionTypes';
 import { GameContext } from '../context/StateContext';
-import { GAME_STATUS } from '../reducers/GameReducer';
+import { GAME_STATUS, RESULT_STATUS } from '../reducers/GameReducer';
 import socket from '../util/socket';
 
 const checkGame = (game) => {
@@ -37,7 +37,7 @@ const Game = () => {
 
   const handleClick = cellNumber => {
     // Exit if we have a winner or if the game ended (i.e. someone disconnected/left the game)
-    if (state.game.winner || state.game.status === GAME_STATUS.ENDED) return;
+    if (state.game.winner || state.game.status === GAME_STATUS.OFF) return;
 
     // Exit if not current user's turn
     if (state.game.nextTurn !== state.user.username) return;
@@ -138,34 +138,54 @@ const Game = () => {
       // setWinner(winner);
     })
 
+    
+    socket.on('user_left_game', userWhoLeft => {
+      console.log('user_left_game listener')
+      dispatch({ type: ACTIONS.USER_LEFT_GAME, payload: userWhoLeft.username });
+      // setLeftGame(userWhoLeft);
+    })
+
     socket.on('restart_game', data => {
       console.log('restart_game listener - client side')
       dispatch({ type: ACTIONS.RESTART_GAME })
       dispatch({ type: ACTIONS.SET_NEXT_TURN, payload: data.playerOne.username });
     })
-
-    socket.on('left_game', userWhoLeft => {
-      setLeftGame(userWhoLeft);
-    })
   }, [])
 
   return (
     <div className="game">
+
       <h4>Game</h4>
+
       {state.game.winner && (
         <>
           <p>The winner is <strong>{state.game.winner}</strong>.</p>
           <button onClick={handleRestartGame}>Restart game</button>
         </>
       )}
-      {leftGame && <p>User <strong>{leftGame}</strong> has left the game.</p>}
-      <button onClick={handleLeaveGame}>Leave game</button>
+
+      {
+        state.game.result === RESULT_STATUS.WITHDREW && 
+        state.game.status === GAME_STATUS.OFF &&
+        (<p>User <strong>{state.game.opponent.username}</strong> has left the game.</p>)
+      }
+
       {/* {console.log(game)} */}
-      <div className="grid">
-          {state.game.grid.map((cell, idx) => {
-            return <div key={idx} className={`cell cell-${idx + 1}`} onClick={() => handleClick(idx)}><span>{cell}</span></div>
-          })}
-        </div>
+
+      {state.game.status === GAME_STATUS.ON ? (
+        <>
+          <button onClick={handleLeaveGame}>Leave game</button>
+          <div className={`grid ${state.game.status.toLowerCase()}`}>
+            {state.game.grid.map((cell, idx) => {
+              return <div key={idx} className={`cell cell-${idx + 1}`} onClick={() => handleClick(idx)}><span>{cell}</span></div>
+            })}
+          </div>
+        </>
+      ) : (
+        <p>Click on a user to send a new game challenge.</p>
+      )
+      }
+
     </div>
   )
 }

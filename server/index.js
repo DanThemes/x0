@@ -67,6 +67,10 @@ io.on('connection', socket => {
     }
   })
 
+  socket.on('restart_game', data => {
+    io.in(data.playerOne.id).emit('restart_game', data);
+  })
+
   socket.on('update_game', data => {
     io.to(data.playerOne.id).emit('update_game', data);
   });
@@ -76,11 +80,11 @@ io.on('connection', socket => {
   })
 
   socket.on('leave_game', data => {
-    // io.broadcast.to(data.room).emit('left_game', data.userWhoLeft.username);
     socket.to(data.room).emit('left_game', data.userWhoLeft.username);
   })
 
   socket.on('disconnect', () => {
+    // TODO: stop the game on disconnect and send a notification
     console.log(`${socket.id} disconnected`)
   })
 

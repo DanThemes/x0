@@ -1,7 +1,13 @@
 import React, { useEffect, useState } from 'react'
+import { useContext } from 'react';
+import { ACTIONS } from '../actions/ActionTypes';
+import { GameContext } from '../context/StateContext';
+import { GAME_STATUS } from '../reducers/GameReducer';
+import socket from '../util/socket';
 
 const checkGame = (game) => {
   if (game[0] === game[1] && game[1] === game[2]) {
+    // TODO: make a line animation through the winning combo
     return game[0];
   } else if (game[3] === game[4] && game[4] === game[5]) {
     return game[3];
@@ -21,90 +27,102 @@ const checkGame = (game) => {
   return null;
 }
 
-const Game = ({ user, gameData: {playerOne, playerTwo}, socket }) => {
-  const [game, setGame] = useState(new Array(9).fill(null));
+const Game = () => {
+  // const [game, setGame] = useState(new Array(9).fill(null));
   const [nextTurn, setNextTurn] = useState(null);
   const [winner, setWinner] = useState(null);
   const [leftGame, setLeftGame] = useState(null);
 
+  const { state, dispatch } = useContext(GameContext);
+
   const handleClick = cellNumber => {
-    // Exit if game ended
-    if (winner || leftGame) return;
+    // Exit if we have a winner or if the game ended (i.e. someone disconnected/left the game)
+    if (state.game.winner || state.game.status === GAME_STATUS.ENDED) return;
 
     // Exit if not current user's turn
-    if(nextTurn !== user.username) return;
+    if (state.game.nextTurn !== state.user.username) return;
 
     // Make a copy of the game state
-    const newGameState = [...game];
+    const newGameState = [...state.game.grid];
     
     // Exit if clicked on a non-empty cell
-    if(newGameState[cellNumber] !== null) return;
+    if (newGameState[cellNumber] !== null) return;
 
     let newNextTurn;
 
-    if (playerOne.username === user.username) {
+    if (state.game.playerOne.username === state.user.username) {
       newGameState[cellNumber] = 'X';
-      newNextTurn = playerTwo.username;
+      newNextTurn = state.game.playerTwo.username;
     } else {
       newGameState[cellNumber] = '0';
-      newNextTurn = playerOne.username;
+      newNextTurn = state.game.playerOne.username;
     }
 
     const gameUpdate = {
-      playerOne,
-      playerTwo,
+      playerOne: state.game.playerOne,
+      playerTwo: state.game.playerTwo,
       nextTurn: newNextTurn,
-      game: newGameState
+      grid: newGameState
     }
 
     console.log(gameUpdate)
 
     socket.emit('update_game', gameUpdate);
+    dispatch({ type: ACTIONS.UPDATE_GAME_GRID, payload: gameUpdate.grid })
   }
 
   const handleLeaveGame = () => {
     socket.emit('leave_game', {
-      room: playerOne.id,
-      userWhoLeft: user
+      room: state.game.playerOne.id,
+      userWhoLeft: state.user
+    });
+  }
+
+  const handleRestartGame = () => {
+    socket.emit('restart_game', {
+      playerOne: state.game.playerOne,
+      playerTwo: state.game.playerTwo
     });
   }
 
   useEffect(() => {
-    console.log(game);
+    console.log(state.game.grid);
 
     // End the game when all cells have been filled in
-    if (!game.includes(null)) {
+    if (!state.game.grid.includes(null)) {
 
       // Draw
-      if (checkGame(game) === null) {
+      if (checkGame(state.game.grid) === null) {
         socket.emit('game_over', {
-          room: playerOne.id,
+          room: state.game.playerOne.id,
           winner: null
         });
       }
     }
-  }, [game])
+  }, [state.game.grid])
 
   useEffect(() => {
-    setNextTurn(() => playerOne.username);
+    dispatch({ type: ACTIONS.SET_NEXT_TURN, payload: state.game.playerOne.username });
 
     socket.on('update_game', data => {
 
       // Check if there's a winner
-      if (checkGame(data.game) === 'X') {
+      if (checkGame(data.grid) === 'X') {
         socket.emit('game_over', {
-          room: playerOne.id,
-          winner: playerOne.username
+          room: state.game.playerOne.id,
+          winner: state.game.playerOne.username
         });
-      } else if (checkGame(data.game) === '0') {
+      } else if (checkGame(data.grid) === '0') {
         socket.emit('game_over', {
-          room: playerOne.id,
-          winner: playerTwo.username
+          room: state.game.playerOne.id,
+          winner: state.game.playerTwo.username
         });
       }
 
-      setGame(data.game);
-      setNextTurn(data.nextTurn);
+      dispatch({ type: ACTIONS.UPDATE_GAME_GRID, payload: data.grid })
+      dispatch({ type: ACTIONS.SET_NEXT_TURN, payload: data.nextTurn });
+      // setGame(data.game);
+      // setNextTurn(data.nextTurn);
 
       console.log(data);
     })
@@ -116,7 +134,14 @@ const Game = ({ user, gameData: {playerOne, playerTwo}, socket }) => {
         console.log('Game over! It\'s a draw!');
       }
 
-      setWinner(winner);
+      dispatch({ type: ACTIONS.SET_WINNER, payload: winner })
+      // setWinner(winner);
+    })
+
+    socket.on('restart_game', data => {
+      console.log('restart_game listener - client side')
+      dispatch({ type: ACTIONS.RESTART_GAME })
+      dispatch({ type: ACTIONS.SET_NEXT_TURN, payload: data.playerOne.username });
     })
 
     socket.on('left_game', userWhoLeft => {
@@ -127,12 +152,17 @@ const Game = ({ user, gameData: {playerOne, playerTwo}, socket }) => {
   return (
     <div className="game">
       <h4>Game</h4>
-      {winner && <p>The winner is <strong>{winner}</strong>.</p>}
+      {state.game.winner && (
+        <>
+          <p>The winner is <strong>{state.game.winner}</strong>.</p>
+          <button onClick={handleRestartGame}>Restart game</button>
+        </>
+      )}
       {leftGame && <p>User <strong>{leftGame}</strong> has left the game.</p>}
       <button onClick={handleLeaveGame}>Leave game</button>
       {/* {console.log(game)} */}
       <div className="grid">
-          {game.map((cell, idx) => {
+          {state.game.grid.map((cell, idx) => {
             return <div key={idx} className={`cell cell-${idx + 1}`} onClick={() => handleClick(idx)}><span>{cell}</span></div>
           })}
         </div>

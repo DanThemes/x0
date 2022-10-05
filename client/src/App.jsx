@@ -3,55 +3,56 @@ import Game from './components/Game';
 import Login from './components/Login';
 import Notification from './components/Notification';
 import { GameContext } from './context/StateContext';
-import io from 'socket.io-client';
+import { GAME_STATUS } from './reducers/GameReducer';
+import { ACTIONS } from "./actions/ActionTypes";
+import socket from './util/socket';
 
 import './app.css';
 
-const socket = io('http://localhost:3001', {
-  autoConnect: false,
-
-  withCredentials: true,
-  transports: ['websocket']
-});
 
 const App = () => {
   const [user, setUser] = useState({});
   const [opponent, setOpponent] = useState({});
   const [users, setUsers] = useState([]);
-  const [isConnected, setIsConnected] = useState(false);
+  // const [isConnected, setIsConnected] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
   const [showGame, setShowGame] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
+  // const [isPlaying, setIsPlaying] = useState(false);
   const [gameData, setGameData] = useState({});
 
-  const {state, dispatch} = useContext(GameContext);
+  const { state, dispatch } = useContext(GameContext);
 
+  // state.socket.connect()
 
-  
-  const handleUserSelect = () => {
-    if (user.username.length < 1) return;
+  // const handleUserSelect = () => {
+  //   // if (state.user.username.length < 1) return;
 
-    // TODO: don't allow 2 users with the same username
+  //   // // TODO: don't allow 2 users with the same username
 
-    socket.auth = { username: user.username };
-    socket.connect();
+  //   // socket.auth = { username: state.user.username };
+  //   // socket.connect();
     
-    setIsConnected(true);
-  }
+  //   // dispatch({ type: ACTIONS.SET_IS_CONNECTED, payload: true})
+  //   // setIsConnected(true);
+  // }
 
   // Send a challenge
   const handleSendChallenge = (userClicked) => {
     // Can't challenge anyone during a game
-    if (isPlaying) return;
+    if (state.game.status === GAME_STATUS.STARTED) return;
 
-    setOpponent(userClicked);
+    // setOpponent(userClicked);
+    dispatch({ type: ACTIONS.SET_OPPONENT, payload: userClicked })
 
     // Exit if user clicks on himself
     if (userClicked.id === socket.id) return;
     
     // Emit a challenge
+
+    // Note: playerOne is always the one sending the challenge
+    // and playerTwo is always the one receiving the challenge
     socket.emit('send_challenge', {
-      playerOne: { id: socket.id, username: user.username },
+      playerOne: { id: socket.id, username: state.user.username },
       playerTwo: { id: userClicked.id, username: userClicked.username }
     });
   }
@@ -60,43 +61,45 @@ const App = () => {
     setShowNotification(false);
 
     if (response) {
-      socket.emit('join_room', opponent.id);
+      socket.emit('join_room', state.game.opponent.id);
     }
 
     socket.emit('respond_to_challenge', {
-      playerOne: opponent,
-      playerTwo: user,
+      playerOne: state.game.opponent,
+      playerTwo: state.user,
       answer: response
     });
   }
 
   useEffect(() => {
     socket.on('users', usersList => {
-      console.log('on users event')
       console.log(usersList)
 
+      // Or show the current user and underneath show all the rest
+      // of the users by using .filter on the users array.
       const newUsers = usersList.sort((a, b) => {
         // console.log(`${a.username} = ${username} AND ${b.username} = ${username}`);
-        if (a.username === user.username) return -1;
-        if (b.username === user.username) return 1;
+        if (a.username === state.user.username) return -1;
+        if (b.username === state.user.username) return 1;
         if (a.username < b.username) return -1;
         return a.username > b.username ? 1 : 0;
       })
 
-      
-      setUser((prev) => ({ ...prev, id: socket.id }));
-      setUsers(newUsers);
+      // setUser((prev) => ({ ...prev, id: socket.id }));
+      dispatch({ type: ACTIONS.SET_USER_ID, payload: { id: socket.id } })
+      dispatch({ type: ACTIONS.SET_USERS, payload: { users: newUsers } })
     })
 
     return () => {
       socket.off('users');
     }
-  }, [user])
+  }, [state.user])
 
 
   useEffect(() => {
     socket.on('receive_challenge', data => {
-      setOpponent(data.playerOne);
+      // setOpponent(data.playerOne);
+      dispatch({ type: ACTIONS.SET_OPPONENT, payload: data.playerOne })
       setShowNotification(true);
       console.log(data);
     })
@@ -104,21 +107,27 @@ const App = () => {
     socket.on('start_game', data => {
       setShowNotification(false);
       setShowGame(true);
-      setIsPlaying(true);
-      setGameData(data);
+      dispatch({ type: ACTIONS.SET_GAME_STATUS, payload: GAME_STATUS.STARTED })
+      dispatch({ type: ACTIONS.SET_PLAYERS, payload: { playerOne: data.playerOne, playerTwo: data.playerTwo } })
+    
+
+      
+
+      // setGameData(data);
       console.log('Playing against')
       console.log(data)
     })
 
     socket.on('refused_to_play', data => {
       setShowNotification(false);
-      setOpponent({});
+      dispatch({ type: ACTIONS.SET_OPPONENT, payload: {} })
       console.log('Player refused to play')
       console.log(data)
     })
 
     socket.on('game_over', data => {
-      setIsPlaying(false);
+      dispatch({ type: ACTIONS.SET_GAME_STATUS, payload: GAME_STATUS.ENDED })
+      // setIsPlaying(false);
     })
 
     return () => {
@@ -127,23 +136,24 @@ const App = () => {
       socket.off('refused_to_play');
       socket.off('game_over');
     }
-  }, [])
+  }, [dispatch])
 
   return (
     <div className="container">
       <aside className="sidebar">
-        {!isConnected && (
+        {!state.user.connected && (
           <>
             <h4>Select a username to chat and play</h4>
-            <Login user={user} setUser={setUser} handleUserSelect={handleUserSelect} />
+            {/* <Login user={user} setUser={setUser} handleUserSelect={handleUserSelect} /> */}
+            <Login />
           </>
         )}
 
         <h4>Global Chat</h4>
 
         <p>chat...</p>
-        {console.log(user)}
-        {users.map(user => (
+        {console.log(state.user)}
+        {state.users.map(user => (
           <div key={user.id}>
             <p onClick={() => handleSendChallenge(user)}>{user.username}<br />{user.id}</p>
             <hr />
@@ -152,13 +162,13 @@ const App = () => {
       </aside>
 
       <main className="content">
-        {/* {console.log(state)} */}
+        {console.log(state)}
         
         {/* {!username ? ( */}
           {/* <Login username={username} setUsername={setUsername} /> */}
           {/* ) : ( */}
-          {showNotification && <Notification handleResponseToChallenge={handleResponseToChallenge} opponent={opponent} /> }
-          {showGame && <Game user={user} gameData={gameData} socket={socket} /> }
+          {showNotification && <Notification handleResponseToChallenge={handleResponseToChallenge} /> }
+          {showGame && <Game /> }
         {/* )} */}
       </main>
 

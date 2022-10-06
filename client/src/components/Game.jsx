@@ -27,11 +27,7 @@ const checkGame = (game) => {
   return null;
 }
 
-const Game = () => {
-  // const [game, setGame] = useState(new Array(9).fill(null));
-  // const [nextTurn, setNextTurn] = useState(null);
-  // const [winner, setWinner] = useState(null);
-  // const [leftGame, setLeftGame] = useState(null);
+const Game = ({opponentLeftGame, setOpponentLeftGame}) => {
 
   const { state, dispatch } = useContext(GameContext);
 
@@ -103,7 +99,7 @@ const Game = () => {
   }, [state.game.grid])
 
   useEffect(() => {
-    dispatch({ type: ACTIONS.SET_NEXT_TURN, payload: state.game.playerOne.username });
+    dispatch({ type: ACTIONS.SET_NEXT_TURN, payload: state.game.playerOne?.username });
 
     socket.on('update_game', data => {
 
@@ -122,8 +118,6 @@ const Game = () => {
 
       dispatch({ type: ACTIONS.UPDATE_GAME_GRID, payload: data.grid })
       dispatch({ type: ACTIONS.SET_NEXT_TURN, payload: data.nextTurn });
-      // setGame(data.game);
-      // setNextTurn(data.nextTurn);
 
       console.log(data);
     })
@@ -140,8 +134,11 @@ const Game = () => {
 
     
     socket.on('user_left_game', userWhoLeft => {
-      console.log('user_left_game listener')
-      dispatch({ type: ACTIONS.USER_LEFT_GAME, payload: userWhoLeft.username });
+      console.log('user_left_game listener');
+      setOpponentLeftGame(true);
+
+      dispatch({ type: ACTIONS.RESET_GAME })
+      // dispatch({ type: ACTIONS.USER_LEFT_GAME, payload: userWhoLeft.username });
     })
 
     socket.on('restart_game', data => {
@@ -168,9 +165,8 @@ const Game = () => {
       }
 
       {
-        state.game.result === RESULT_STATUS.WITHDREW && 
-        state.game.status === GAME_STATUS.OFF &&
-        (<p>User <strong>{state.game.opponent.username}</strong> has left the game.</p>)
+        opponentLeftGame &&
+        (<p>Opponent has left the game.</p>)
       }
 
       {/* {console.log(game)} */}

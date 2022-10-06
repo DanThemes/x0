@@ -11,30 +11,11 @@ import './app.css';
 
 
 const App = () => {
-  // const [user, setUser] = useState({});
-  // const [opponent, setOpponent] = useState({});
-  // const [users, setUsers] = useState([]);
-  // const [isConnected, setIsConnected] = useState(false);
+  const [opponentLeftGame, setOpponentLeftGame] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
   const [showGame, setShowGame] = useState(false);
-  // const [isPlaying, setIsPlaying] = useState(false);
-  // const [gameData, setGameData] = useState({});
 
   const { state, dispatch } = useContext(GameContext);
-
-  // state.socket.connect()
-
-  // const handleUserSelect = () => {
-  //   // if (state.user.username.length < 1) return;
-
-  //   // // TODO: don't allow 2 users with the same username
-
-  //   // socket.auth = { username: state.user.username };
-  //   // socket.connect();
-    
-  //   // dispatch({ type: ACTIONS.SET_IS_CONNECTED, payload: true})
-  //   // setIsConnected(true);
-  // }
 
   // Send a challenge
   const handleSendChallenge = (userClicked) => {
@@ -45,7 +26,7 @@ const App = () => {
     if (userClicked.id === socket.id) return;
 
     // Reset the game (i.e. set state.game back to initial values)
-    dispatch({ type: ACTIONS.RESET_GAME })
+    // dispatch({ type: ACTIONS.RESET_GAME })
     
     // Set the user clicked on as the opponent
     dispatch({ type: ACTIONS.SET_OPPONENT, payload: userClicked })
@@ -60,11 +41,12 @@ const App = () => {
     });
   }
 
-  const handleResponseToChallenge = response => {
+  const handleResponseToChallenge = (response) => {
     setShowNotification(false);
 
-    if (response) {
+    if (response === true) {
       socket.emit('join_room', state.game.opponent.id);
+      dispatch({ type: ACTIONS.RESTART_GAME })
     }
 
     socket.emit('respond_to_challenge', {
@@ -96,20 +78,26 @@ const App = () => {
     return () => {
       socket.off('users');
     }
-  }, [state.user])
+  }, [state.user, dispatch])
 
 
   useEffect(() => {
     socket.on('receive_challenge', data => {
-      // setOpponent(data.playerOne);
       dispatch({ type: ACTIONS.SET_OPPONENT, payload: data.playerOne })
       setShowNotification(true);
       console.log(data);
     })
 
     socket.on('start_game', data => {
+      console.log('game started. . . ')
+      setOpponentLeftGame(false);
       setShowNotification(false);
       setShowGame(true);
+      
+
+      // Reset the game (i.e. set state.game back to initial values)
+      dispatch({ type: ACTIONS.RESTART_GAME })
+      dispatch({ type: ACTIONS.SET_NEXT_TURN, payload: data.playerOne.username });
       dispatch({ type: ACTIONS.SET_GAME_STATUS, payload: GAME_STATUS.ON })
       dispatch({ type: ACTIONS.SET_PLAYERS, payload: { playerOne: data.playerOne, playerTwo: data.playerTwo } })
     
@@ -123,7 +111,7 @@ const App = () => {
 
     socket.on('refused_to_play', data => {
       setShowNotification(false);
-      dispatch({ type: ACTIONS.SET_OPPONENT, payload: {} })
+      dispatch({ type: ACTIONS.SET_OPPONENT, payload: null })
       console.log('Player refused to play')
       console.log(data)
     })
@@ -167,7 +155,7 @@ const App = () => {
         {console.log(state)}
         
         {showNotification && <Notification handleResponseToChallenge={handleResponseToChallenge} /> }
-        {showGame && <Game /> }
+        {showGame && <Game opponentLeftGame={opponentLeftGame} setOpponentLeftGame={setOpponentLeftGame} /> }
       </main>
 
     </div>

@@ -124,15 +124,15 @@ export const GameReducer = (state, action) => {
         }
       }
 
-    case ACTIONS.USER_LEFT_GAME:
-      return {
-        ...state,
-        game: {
-          ...state.game,
-          status: GAME_STATUS.OFF,
-          result: RESULT_STATUS.WITHDREW
-        }
-      }
+    // case ACTIONS.USER_LEFT_GAME:
+    //   return {
+    //     ...state,
+    //     game: {
+    //       ...state.game,
+    //       status: GAME_STATUS.OFF,
+    //       result: RESULT_STATUS.WITHDREW
+    //     }
+    //   }
 
     case ACTIONS.SET_GAME_STATUS:
       return {

@@ -42,7 +42,14 @@ io.on('connection', socket => {
   io.emit('users', usersList);
 
   socket.on('send_challenge', data => {
+    const playerTwoSocket = io.sockets.sockets.get(data.playerTwo.id);
+    playerTwoSocket.join(data.playerTwo.id);
+    
+    const playerOneSocket = io.sockets.sockets.get(data.playerOne.id);
+    playerOneSocket.leave(data.playerTwo.id);
+
     console.log(`${data.playerOne.id} send a challenge to ${data.playerTwo.id}`);
+    console.log(io.sockets.adapter.rooms.get(data.playerOne.id))
 
     io.to(data.playerTwo.id).emit('receive_challenge', data)
   })
@@ -53,10 +60,22 @@ io.on('connection', socket => {
     console.log(`${socket.username} has joined room: ${room}`)
   })
 
+  
+  console.log('---')
+  console.log(socket.id)
+  console.log(socket.rooms)
+  console.log('---')
+
   socket.on('respond_to_challenge', data => {
     // console.log(data);
+    console.log(`${socket.id} respond_to_challenge`)
     
     // if playerTwo accepted, start the game
+    const playerOneSocket = io.sockets.sockets.get(data.playerOne.id);
+    playerOneSocket.join(data.playerOne.id);
+
+    console.log(data.playerOne.id);
+    console.log(io.sockets.adapter.rooms.get(data.playerOne.id))
     if (data.answer) {
       io.to(data.playerOne.id).emit('start_game', data);
     } 
@@ -68,12 +87,13 @@ io.on('connection', socket => {
   })
   
   socket.on('leave_game', data => {
-    // if (data.room !== socket.id) {
-    //   socket.leave(data.room);
-    // }
+    // remove socket from room, but only if it's not his own room
+
+    // Bug might be here... users should not be allowed to leave their own rooms
     const userWhoLeftSocket = io.sockets.sockets.get(data.userWhoLeft.id);
     userWhoLeftSocket.leave(data.room);
 
+    // emit user_left_game to the other player
     io.to(data.room).emit('user_left_game', data.userWhoLeft);
     console.log(`data.room: ${data.room} - socket id: ${socket.id}`)
     // console.log(socket.rooms)

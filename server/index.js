@@ -3,6 +3,7 @@ const app = express();
 const http = require('http');
 const server = http.createServer(app);
 const cors = require('cors');
+const giveMeAJoke = require('give-me-a-joke');
 
 app.use(cors());
 
@@ -128,7 +129,10 @@ io.on('connection', socket => {
 
 
 app.get('/', (req, res) => {
-  res.send('Nothing to see here.');
+  giveMeAJoke.getRandomDadJoke (function(joke) {
+    res.send(joke);
+  });
+  // res.send('Nothing to see here.');
 })
 
 server.listen(3001, () => {

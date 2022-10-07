@@ -21,7 +21,7 @@ const io = new Server(server, {
     origin: 'https://danthemes.com',
     credentials: true,
     methods: ['GET', 'POST'],
-    transports: ['websocket', 'polling'],
+    transports: ['websocket'],
   },
   allowEIO3: true
 });

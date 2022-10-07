@@ -6,14 +6,16 @@ import { useRef } from 'react';
 import socket from '../util/socket';
 
 const Login = () => {
-  const { dispatch } = useContext(GameContext);
+  const { state, dispatch } = useContext(GameContext);
 
   const usernameRef = useRef();
 
   const handleUserSelect = () => {
     // Min 1 character
-    // TODO: don't allow 2 users with the same username
     if (usernameRef.current.value.length < 1) return;
+    
+    // Don't allow 2 users with the same username
+    // if (state.users.find(user => user.username === usernameRef.current.value)) return;
 
     // Set the username
     dispatch({ type: ACTIONS.SET_USER_USERNAME, payload: usernameRef.current.value })

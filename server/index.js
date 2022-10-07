@@ -7,10 +7,18 @@ const giveMeAJoke = require('give-me-a-joke');
 
 app.use(cors());
 
+// Add headers before the routes are defined
+app.use(function (req, res, next) {
+  res.setHeader('Access-Control-Allow-Origin', 'https://danthemes.com/react/x0');
+
+  // Pass to next layer of middleware
+  next();
+});
+
 const { Server } = require('socket.io');
 const io = new Server(server, {
   cors: {
-    origin: ['https://danthemes.com/react/x0/'],
+    origin: 'https://danthemes.com/react/x0',
     credentials: true,
     methods: ['GET', 'POST']
   }

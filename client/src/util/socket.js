@@ -4,7 +4,7 @@ const socket = io('https://sleepy-blue-macaw.cyclic.app', {
   autoConnect: false,
 
   withCredentials: true,
-  transports: ['polling', 'websocket']
+  // transports: ['polling', 'websocket']
 });
 
 export default socket;

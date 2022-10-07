@@ -17,9 +17,6 @@ const ActiveUsers = () => {
 
     // Exit if user clicks on himself
     if (userClicked.id === socket.id) return;
-
-    // Reset the game (i.e. set state.game back to initial values)
-    // dispatch({ type: ACTIONS.RESET_GAME })
     
     // Set the user clicked on as the opponent
     dispatch({ type: ACTIONS.SET_OPPONENT, payload: userClicked })
@@ -39,16 +36,15 @@ const ActiveUsers = () => {
       console.log(usersList)
 
       // Or show the current user and underneath show all the rest
-      // of the users by using .filter on the users array.
+      // of the users by using .filter on the users array
+      // to filter out the current user
       const newUsers = usersList.sort((a, b) => {
-        // console.log(`${a.username} = ${username} AND ${b.username} = ${username}`);
-        if (a.username === state.user.username) return -1;
-        if (b.username === state.user.username) return 1;
+        if (a.id === socket.id) return -1;
+        if (b.id === socket.id) return 1;
         if (a.username < b.username) return -1;
         return a.username > b.username ? 1 : 0;
       })
 
-      // setUser((prev) => ({ ...prev, id: socket.id }));
       dispatch({ type: ACTIONS.SET_USER_ID, payload: { id: socket.id } })
       dispatch({ type: ACTIONS.SET_USERS, payload: { users: newUsers } })
     })
@@ -56,7 +52,7 @@ const ActiveUsers = () => {
     return () => {
       socket.off('users');
     }
-  }, [state.user, dispatch])
+  }, [socket, dispatch])
 
   return (
     <div className='active-users'>

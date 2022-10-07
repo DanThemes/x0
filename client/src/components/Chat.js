@@ -1,13 +1,13 @@
-import React, { useContext, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { GameContext } from '../context/StateContext';
 import socket from '../util/socket';
 import moment from 'moment';
 
-const appendMessage = (data, user) => {
+const appendMessage = (data) => {
   const chatEl = document.querySelector('.chat-body');
   const messageContainer = document.createElement('div');
   messageContainer.className = 'message';
-  if (data.user.username === user.username) {
+  if (data.user.id === socket.id) {
     messageContainer.classList.add('mine');
   }
 
@@ -29,7 +29,7 @@ const Chat = () => {
 
   const chatBodyRef = useRef();
 
-  const handleSendMessage = () => {
+  const handleSendMessage = useCallback(() => {
     if (!message) return;
 
     console.log('send')
@@ -39,15 +39,25 @@ const Chat = () => {
       message
     })
     setMessage('');
+  });
+
+  const handleSubmitOnEnterKey = e => {
+    if (e.key === 'Enter') {
+      handleSendMessage();
+    }
   }
 
   useEffect(() => {
     if (!state.user.connected) return;
 
     socket.on('receive_message', data => {
-      appendMessage(data, state.user);
+      appendMessage(data);
       chatBodyRef.current.scrollTop = chatBodyRef.current.scrollHeight;
     })
+
+    return () => {
+      socket.off('receive_message');
+    }
   }, [])
 
   return (
@@ -55,7 +65,7 @@ const Chat = () => {
       <h4>Global Chat</h4>
 
       <div className="chat-body" ref={chatBodyRef}></div>
-      <input type="text" placeholder="Message..." value={message} onChange={e => setMessage(e.target.value)} className="send-message" />
+      <input type="text" placeholder="Message..." value={message} onChange={e => setMessage(e.target.value)} onKeyPress={handleSubmitOnEnterKey} className="send-message" />
       <button onClick={handleSendMessage}>Send</button>
     </div>
   )

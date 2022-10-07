@@ -44,7 +44,7 @@ io.on('connection', socket => {
 
   socket.on('send_challenge', data => {
     const playerTwoSocket = io.sockets.sockets.get(data.playerTwo.id);
-    playerTwoSocket.join(data.playerTwo.id);
+    playerTwoSocket?.join(data.playerTwo.id);
     
     const playerOneSocket = io.sockets.sockets.get(data.playerOne.id);
     playerOneSocket.leave(data.playerTwo.id);

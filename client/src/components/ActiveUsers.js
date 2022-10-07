@@ -10,6 +10,9 @@ const ActiveUsers = () => {
   // Send a challenge
   const handleSendChallenge = (userClicked) => {
     // Can't challenge anyone during a game
+
+    // TODO: remove or disable the "Play against" button if the user is
+    // currently in a game
     if (state.game.status === GAME_STATUS.ON) return;
 
     // Exit if user clicks on himself

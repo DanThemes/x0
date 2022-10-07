@@ -103,11 +103,22 @@ export const GameReducer = (state, action) => {
         ...state,
         game: {
           ...state.game,
-          // grid: new Array(9).fill(null),
           status: GAME_STATUS.OFF,
           nextTurn: null,
           winner: payload,
           result: RESULT_STATUS.WIN
+        }
+      }
+
+    case ACTIONS.SET_DRAW:
+      return {
+        ...state,
+        game: {
+          ...state.game,
+          status: GAME_STATUS.OFF,
+          nextTurn: null,
+          winner: null,
+          result: RESULT_STATUS.DRAW
         }
       }
 

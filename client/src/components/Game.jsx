@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect } from 'react'
 import { useContext } from 'react';
 import { ACTIONS } from '../actions/ActionTypes';
 import { GameContext } from '../context/StateContext';
@@ -124,12 +124,12 @@ const Game = ({opponentLeftGame, setOpponentLeftGame}) => {
 
     socket.on('game_over', winner => {
       if(winner !== null) {
-        console.log(`Game over! Player ${winner} won!`);
+        console.log('its a win')
+        dispatch({ type: ACTIONS.SET_WINNER, payload: winner })
       } else {
-        console.log('Game over! It\'s a draw!');
+        console.log('its a draw')
+        dispatch({ type: ACTIONS.SET_DRAW })
       }
-
-      dispatch({ type: ACTIONS.SET_WINNER, payload: winner })
     })
 
     
@@ -153,8 +153,13 @@ const Game = ({opponentLeftGame, setOpponentLeftGame}) => {
 
       <h4>Game</h4>
 
-      {state.game.winner && (
+      {/* TODO: keep track of the score between 2 players */}
+      {state.game.result === RESULT_STATUS.WIN && (
           <p>The winner is <strong>{state.game.winner}</strong>.</p>
+      )}
+
+      {state.game.result === RESULT_STATUS.DRAW && (
+          <p>It's a draw.</p>
       )}
 
       {

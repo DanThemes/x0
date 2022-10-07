@@ -23,7 +23,10 @@ export const INITIAL_STATE = {
     opponent: null,
     nextTurn: null,
     winner: null,
-    result: null
+    result: null,
+    opponentLeftGame: false,
+    showNotification: false,
+    showGame: false
   },
   // notification: null
 }
@@ -162,10 +165,32 @@ export const GameReducer = (state, action) => {
         }
       }
 
-      
+    case ACTIONS.SET_SHOW_NOTIFICATION:
+      return {
+        ...state,
+        game: {
+          ...state.game,
+          showNotification: payload
+        }
+      }
 
+    case ACTIONS.SET_OPPONENT_LEFT_GAME:
+      return {
+        ...state,
+        game: {
+          ...state.game,
+          opponentLeftGame: payload
+        }
+      }
 
-
+    case ACTIONS.SET_SHOW_GAME:
+      return {
+        ...state,
+        game: {
+          ...state.game,
+          showGame: payload
+        }
+      }
 
 
 

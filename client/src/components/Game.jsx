@@ -3,32 +3,11 @@ import { useContext } from 'react';
 import { ACTIONS } from '../actions/ActionTypes';
 import { GameContext } from '../context/StateContext';
 import { GAME_STATUS, RESULT_STATUS } from '../reducers/GameReducer';
+import Notification from './Notification';
 import socket from '../util/socket';
+import checkGame from '../util/checkGame';
 
-const checkGame = (game) => {
-  if (game[0] === game[1] && game[1] === game[2]) {
-    // TODO: make a line animation through the winning combo
-    return game[0];
-  } else if (game[3] === game[4] && game[4] === game[5]) {
-    return game[3];
-  } else if (game[6] === game[7] && game[7] === game[8]) {
-    return game[6];
-  } else if (game[0] === game[3] && game[3] === game[6]) {
-    return game[0];
-  } else if (game[1] === game[4] && game[4] === game[7]) {
-    return game[1];
-  } else if (game[2] === game[5] && game[5] === game[8]) {
-    return game[2];
-  } else if (game[0] === game[4] && game[4] === game[8]) {
-    return game[0];
-  } else if (game[2] === game[4] && game[4] === game[6]) {
-    return game[2];
-  }
-  return null;
-}
-
-const Game = ({opponentLeftGame, setOpponentLeftGame}) => {
-
+const Game = () => {
   const { state, dispatch } = useContext(GameContext);
 
   const handleClick = cellNumber => {
@@ -83,8 +62,6 @@ const Game = ({opponentLeftGame, setOpponentLeftGame}) => {
   }
 
   useEffect(() => {
-    console.log(state.game.grid);
-
     // End the game when all cells have been filled in
     if (!state.game.grid.includes(null)) {
 
@@ -96,13 +73,40 @@ const Game = ({opponentLeftGame, setOpponentLeftGame}) => {
         });
       }
     }
-  }, [state.game.grid])
+  }, [state.game.grid, state.game.playerOne])
 
   useEffect(() => {
     dispatch({ type: ACTIONS.SET_NEXT_TURN, payload: state.game.playerOne?.username });
 
-    socket.on('update_game', data => {
+    socket.on('receive_challenge', data => {
+      console.log('received_challenge')
+      dispatch({ type: ACTIONS.SET_OPPONENT, payload: data.playerOne });
+      dispatch({ type: ACTIONS.SET_SHOW_NOTIFICATION, payload: true });
+      // console.log(data);
+    })
 
+    socket.on('refused_to_play', data => {
+      dispatch({ type: ACTIONS.SET_SHOW_NOTIFICATION, payload: false });
+      dispatch({ type: ACTIONS.SET_OPPONENT, payload: null });
+      // console.log('Player refused to play');
+      // console.log(data);
+    })
+
+    socket.on('start_game', data => {
+      dispatch({ type: ACTIONS.SET_OPPONENT_LEFT_GAME, payload: false });
+      dispatch({ type: ACTIONS.SET_SHOW_NOTIFICATION, payload: false });
+      dispatch({ type: ACTIONS.SET_SHOW_GAME, payload: true });
+
+      dispatch({ type: ACTIONS.RESTART_GAME })
+      dispatch({ type: ACTIONS.SET_NEXT_TURN, payload: data.playerOne.username });
+      dispatch({ type: ACTIONS.SET_GAME_STATUS, payload: GAME_STATUS.ON });
+      dispatch({ type: ACTIONS.SET_PLAYERS, payload: { playerOne: data.playerOne, playerTwo: data.playerTwo } });
+
+      console.log('Playing against')
+      console.log(data)
+    })
+
+    socket.on('update_game', data => {
       // Check if there's a winner
       if (checkGame(data.grid) === 'X') {
         socket.emit('game_over', {
@@ -119,23 +123,12 @@ const Game = ({opponentLeftGame, setOpponentLeftGame}) => {
       dispatch({ type: ACTIONS.UPDATE_GAME_GRID, payload: data.grid })
       dispatch({ type: ACTIONS.SET_NEXT_TURN, payload: data.nextTurn });
 
-      console.log(data);
+      // console.log(data);
     })
 
-    socket.on('game_over', winner => {
-      if(winner !== null) {
-        console.log('its a win')
-        dispatch({ type: ACTIONS.SET_WINNER, payload: winner })
-      } else {
-        console.log('its a draw')
-        dispatch({ type: ACTIONS.SET_DRAW })
-      }
-    })
-
-    
     socket.on('user_left_game', userWhoLeft => {
       console.log('user_left_game listener');
-      setOpponentLeftGame(true);
+      dispatch({ type: ACTIONS.SET_OPPONENT_LEFT_GAME, payload: true });
 
       dispatch({ type: ACTIONS.RESET_GAME })
       // dispatch({ type: ACTIONS.USER_LEFT_GAME, payload: userWhoLeft.username });
@@ -146,7 +139,27 @@ const Game = ({opponentLeftGame, setOpponentLeftGame}) => {
       dispatch({ type: ACTIONS.RESTART_GAME })
       dispatch({ type: ACTIONS.SET_NEXT_TURN, payload: data.playerOne.username });
     })
-  }, [])
+
+    socket.on('game_over', winner => {
+      if(winner !== null) {
+        dispatch({ type: ACTIONS.SET_WINNER, payload: winner })
+      } else {
+        dispatch({ type: ACTIONS.SET_DRAW })
+      }
+
+      dispatch({ type: ACTIONS.SET_GAME_STATUS, payload: GAME_STATUS.OFF });
+    })
+
+    return () => {
+      socket.off('receive_challenge');
+      socket.off('refused_to_play');
+      socket.off('start_game');
+      socket.off('update_game');
+      socket.off('user_left_game');
+      socket.off('restart_game');
+      socket.off('game_over');
+    }
+  }, [dispatch, state.game.playerOne, state.game.playerTwo])
 
   return (
     <div className="game">
@@ -154,41 +167,44 @@ const Game = ({opponentLeftGame, setOpponentLeftGame}) => {
       <h4>Game</h4>
 
       {/* TODO: keep track of the score between 2 players */}
-      {state.game.result === RESULT_STATUS.WIN && (
-          <p>The winner is <strong>{state.game.winner}</strong>.</p>
-      )}
 
-      {state.game.result === RESULT_STATUS.DRAW && (
-          <p>It's a draw.</p>
-      )}
+
 
       {
-        (state.game.result !== null && state.game.result !== RESULT_STATUS.WITHDREW) &&
-        (
+        state.game.result === RESULT_STATUS.WIN && 
+        <Notification message={`The winner is ${state.game.winner}.`}>
           <button onClick={handleRestartGame}>Restart game</button>
-        )
+        </Notification>
       }
 
       {
-        opponentLeftGame &&
-        (<p>Opponent has left the game.</p>)
+        state.game.result === RESULT_STATUS.DRAW && 
+        <Notification message={`It's a draw.`}>
+          <button onClick={handleRestartGame}>Restart game</button>
+        </Notification>
       }
 
-      {/* {console.log(game)} */}
+      {
+        state.game.opponentLeftGame && 
+        <Notification message='Opponent has left the game.'>
+          <button onClick={handleRestartGame}>Restart game</button>
+        </Notification>
+      }
 
       {
         (state.game.status === GAME_STATUS.ON || state.game.result === RESULT_STATUS.WIN) ? 
         (
           <>
-            <button onClick={handleLeaveGame}>Leave game</button>
             <div className={`grid ${state.game.status.toLowerCase()}`}>
               {state.game.grid.map((cell, idx) => {
                 return <div key={idx} className={`cell cell-${idx + 1}`} onClick={() => handleClick(idx)}><span>{cell}</span></div>
               })}
             </div>
+            
+            <button onClick={handleLeaveGame} className="button-leave">Leave game</button>
           </>
         ) : (
-          <p>Click on a user to send a new game challenge.</p>
+          <p>Click the "Play against" button to challenge a user to a game.</p>
         )
       }
 

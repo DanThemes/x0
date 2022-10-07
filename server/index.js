@@ -121,6 +121,16 @@ io.on('connection', socket => {
 
 
 
+
+  // Chat
+  socket.on('send_message', data => {
+    console.log('send_message');
+    console.log(data);
+    io.emit('receive_message', data);
+  })
+
+
+
  
 });
 

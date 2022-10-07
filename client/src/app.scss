@@ -1,0 +1,200 @@
+@import url('https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;600&display=swap');
+
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+* {
+  box-sizing: border-box;
+  font-family: 'Rubik', sans-serif;
+}
+
+p {
+  margin: 0;
+}
+
+h4 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+input[type=text] {
+    background: #eee;
+    border: 0;
+    width: 100%;
+    padding: 1rem;
+    border-radius: 0.25rem;
+    margin-bottom: 1rem;
+    font-size: 1rem;
+}
+
+button {
+  display: inline-block;
+  border: 0;
+  line-height: 1;
+  font-size: 0.8rem;
+  background: #000;
+  color: #fff;
+  border-radius: 0.25rem;
+  padding: 0.5rem 1rem;
+  text-transform: uppercase;
+  transition: all 0.3s ease;
+  cursor: pointer;
+
+  &:hover {
+    background: rgb(107, 34, 34);
+  }
+
+  + button {
+    margin-left: 1rem;
+  }
+
+  &.button-leave {
+    margin-top: 1rem;
+    background: rgb(100, 36, 36);
+  }
+}
+
+
+.container {
+  display: flex;
+  gap: 1rem;
+  width: 1200px;
+  max-width: 100%;
+  height: 100vh;
+  margin: 0 auto;
+
+  .sidebar {
+    flex: 1;
+    padding: 1rem;
+    box-shadow: 0 0 50px 0 rgb(0 0 0 / 10%);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .content {
+    flex: 2;
+    padding: 1rem;
+  }
+}
+
+/* Game */
+.grid {
+  display: grid;
+  width: 100%;
+  aspect-ratio: 1;
+  grid-template-columns: repeat(3, 1fr);
+  border: 1px solid #000;
+
+  &.ended {
+    opacity: 0.25;
+  }
+  
+  .cell {
+    border: 1px solid #000;
+    cursor: pointer;
+    position: relative;
+
+    span {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 5rem;
+      font-weight: 100;
+      text-transform: uppercase;
+    }
+  }
+}
+
+/* Notification */
+.notification {
+  background: #e6f5dc;
+  padding: 0.5rem;
+  margin-bottom: 1rem;
+  border-radius: 0.25rem;
+  text-align: center;
+}
+.notification p {
+  margin-bottom: 1rem;
+}
+
+
+/* Chat */
+.active-users {
+  margin-bottom: 2rem;
+
+  .active-user {
+    display: flex;
+    align-items: center;
+    background: #eee;
+    padding: 0.25rem;
+    margin-bottom: 0.5rem;
+    padding: 0.5rem;
+    border-radius: 0.25rem;
+
+    span {
+      flex: 1;
+    }
+  }
+}
+.chat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+
+  .chat-body {
+    flex: 1 1 10rem;
+    display: flex;
+    flex-direction: column;
+    height: 15rem;
+    padding: 0.5rem;
+    border-radius: 0.25rem 0.25rem 0 0;
+    background: #eee;
+    overflow-y: scroll;
+    -ms-overflow-style: none;  /* Internet Explorer 10+ */
+    scrollbar-width: none;  /* Firefox */
+
+    &::-webkit-scrollbar { 
+      display: none;  /* Safari and Chrome */
+    }
+
+    .message::after {
+      content: '';
+      display: block;
+      clear: both;
+    }
+
+    .message + .message {
+      margin-top: 0.5rem;
+    }
+
+    .message-header {
+      font-size: 0.8rem;
+    }
+
+    .message {
+      align-self: flex-start;
+
+      .message-body {
+        background: #e0e0e0;
+        border-radius: 0.25rem;
+        padding: 0.5rem;
+      }
+  
+      &.mine {
+        align-self: flex-end;
+  
+        .message-body {
+          background: #d0d0d0;
+        }
+      }
+    }
+  }
+
+  .send-message {
+    border-radius: 0 0 0.25rem 0.25rem;
+    border-top: 1px solid #ddd;
+  }
+}

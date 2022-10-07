@@ -2,12 +2,11 @@ import React, { useContext } from 'react';
 import { GameContext } from '../context/StateContext';
 import { ACTIONS } from '../actions/ActionTypes';
 import { useRef } from 'react';
-import { useEffect } from 'react';
 
 import socket from '../util/socket';
 
 const Login = () => {
-  const { state, dispatch } = useContext(GameContext);
+  const { dispatch } = useContext(GameContext);
 
   const usernameRef = useRef();
 

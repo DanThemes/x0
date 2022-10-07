@@ -20,8 +20,10 @@ const io = new Server(server, {
   cors: {
     origin: 'https://danthemes.com',
     credentials: true,
-    methods: ['GET', 'POST']
-  }
+    methods: ['GET', 'POST'],
+    transports: ['websocket', 'polling'],
+  },
+  allowEIO3: true
 });
 
 io.engine.on('connection_error', err => {

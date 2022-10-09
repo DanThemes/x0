@@ -1,10 +1,10 @@
 import io from 'socket.io-client';
 
-const socket = io('https://sleepy-blue-macaw.cyclic.app', {
+const socket = io('https://tictactoe-nodejs.onrender.com', {
   autoConnect: false,
 
   withCredentials: true,
-  transports: ['polling']
+  transports: ['polling', 'websocket']
 });
 
 export default socket;

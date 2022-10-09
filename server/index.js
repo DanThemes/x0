@@ -82,7 +82,7 @@ io.on('connection', socket => {
     
     // if playerTwo accepted, start the game
     const playerOneSocket = io.sockets.sockets.get(data.playerOne.id);
-    playerOneSocket.join(data.playerOne.id);
+    playerOneSocket?.join(data.playerOne.id);
 
     console.log(data.playerOne.id);
     console.log(io.sockets.adapter.rooms.get(data.playerOne.id))

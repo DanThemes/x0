@@ -9,7 +9,7 @@ app.use(cors());
 
 // Add headers before the routes are defined
 app.use(function (req, res, next) {
-  res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000');
+  res.setHeader('Access-Control-Allow-Origin', 'https://tictactoe-react.onrender.com');
 
   // Pass to next layer of middleware
   next();
@@ -18,7 +18,7 @@ app.use(function (req, res, next) {
 const { Server } = require('socket.io');
 const io = new Server(server, {
   cors: {
-    origin: 'http://localhost:3000',
+    origin: 'https://tictactoe-react.onrender.com',
     credentials: true,
     methods: ['GET', 'POST'],
   }

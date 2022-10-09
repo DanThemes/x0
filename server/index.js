@@ -21,9 +21,7 @@ const io = new Server(server, {
     origin: 'http://localhost:3000',
     credentials: true,
     methods: ['GET', 'POST'],
-    transports: ['websocket'],
-  },
-  allowEIO3: true
+  }
 });
 
 io.engine.on('connection_error', err => {
